@@ -1,8 +1,6 @@
-from enum import Flag
 import os
 from mistralai import Mistral
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
@@ -13,7 +11,6 @@ client = Mistral(api_key=api_key)
 
 # Green Flag Red Flag
 
-#score = [0,1,2,3,4,5,6,7,8,9,10]
 score = [0,1,2]
 green_flags = ["bateau", "gateau"]
 red_flags = ["braquage", "loup garou"]
@@ -96,40 +93,3 @@ def start_conversation(npc_info, context) :
         print(chat_response.choices[0].message.content)
 
 start_conversation(npc_info, context)
-
-"""
-import string
-from mistralai import Mistral
-
-import dotenv
-import os
-
-dotenv.load_dotenv()
-
-mistral_api_key = os.environ["MISTRAL_API_KEY"]
-
-model = "mistral-large-latest"
-
-client = Mistral(api_key=mistral_api_key)
-
-content = input()
-
-def ask_mistral(content:string):
-
-    stream_response = client.chat.stream(
-        model = model,
-        messages = [
-            {
-                "role": "user",
-                "content": content,
-            }
-        ]
-    )
-
-    for chunk in stream_response:
-        print(chunk.data.choices[0].delta.content)
-
-ask_mistral(content=content)
-
-"""
-
