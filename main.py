@@ -1,4 +1,5 @@
 import os
+import time
 from mistralai import Mistral
 from dotenv import load_dotenv
 
@@ -8,11 +9,6 @@ api_key = os.environ["MISTRAL_API_KEY"]
 model = "mistral-large-latest"
 
 client = Mistral(api_key=api_key)
-
-# Historique de conversation (ajoute les messages ici)
-
-
-
 
 def start_conversation() :
 
@@ -51,14 +47,18 @@ def start_conversation() :
     conversation_history.append(system_message)
 
     # Appel de l'API avec l'historique de conversation
-    chat_response = client.chat.complete(
+    initial_chat_response = client.chat.stream(
         model=model,
         messages=conversation_history
     )
 
-    reponse = chat_response.choices[0].message.content
-    print(reponse)
-
+    initial_response = ""
+    for chunk in initial_chat_response :
+        content = initial_response + chunk.data.choices[0].delta.content
+        if content:
+            print(content, end="", flush=True)
+            time.sleep(0.05) 
+    print()
 
     while True : 
 
@@ -74,12 +74,20 @@ def start_conversation() :
         conversation_history.append(new_message)
 
         # Appel de l'API avec l'historique de conversation
-        chat_response = client.chat.complete(
+        chat_response = client.chat.stream(
             model=model,
             messages=conversation_history
         )
 
-        reponse = chat_response.choices[0].message.content
+        assistant_response = ""
+        for chunk in chat_response :
+            content = assistant_response + chunk.data.choices[0].delta.content
+            if hasattr(chunk, 'data') and chunk.data.choices[0].delta.content:
+                content = chunk.data.choices[0].delta.content
+                assistant_response += content
+                print(content, end="", flush=True)
+                time.sleep(0.05)
+        print()
 
         if any(flag in prompt for flag in red_flags):
             player_score -= 1  # Décrémenter le score si red flag détecté
@@ -89,10 +97,11 @@ def start_conversation() :
                 player_score += 1
                 dump.append(flag)
                 green_flags.remove(flag)
+
+        print("ASSISTANT RESPONSE : ", assistant_response)
          
-        conversation_history.append({"role" : "assistant", "content":reponse})
+        conversation_history.append({"role" : "assistant", "content":assistant_response})
         print("player_score : ", player_score)
-        print(chat_response.choices[0].message.content)
     
         if (player_score == 0) :
             print(loss_line)
