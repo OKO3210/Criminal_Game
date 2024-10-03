@@ -39,6 +39,7 @@ def start_conversation() :
     context = (
     f"Je cherche a te convaincre de te laisser entrer chez toi, si j'emploie un mot dont le champ lexical est proche des mots contenu dans la variable {green_flags}, tu seras contente. a l'inverse, si j'emploie un mot dont le champs lexical est proche d'un mot contenu dans la variable {red_flags}, tu seras mécontente. Maintenant pose moi une question"
     "Il faudra orienter les reponses de l'interlocuteur vers les red flags"
+    f"Il faut essayer d'introduire les termes incluent dans {red_flags} ou {green_flags} dans tes phrases. Ces termes ne doivent pas apparaitre dans une replique deux fois de suite"
     )
 
     # Initialize the conversation with a system message
