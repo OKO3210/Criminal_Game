@@ -1,6 +1,7 @@
 import os
 from mistralai import Mistral
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -11,11 +12,10 @@ client = Mistral(api_key=api_key)
 
 # Green Flag Red Flag
 
-score = [0,1,2]
-green_flags = ["bateau", "gateau"]
-red_flags = ["braquage", "loup garou"]
+#score = [0,1,2,3,4,5,6,7,8,9,10]
 
-dump = []
+green_flags = ["mer", "patisserie", "fete"]
+red_flags = ["braquage", "loup garou", "mort"]
 
 # Historique de conversation (ajoute les messages ici)
 
@@ -26,36 +26,44 @@ npc_info = (
     "Ta tâche est de décider si tu vas laisser entrer ce jeune homme ou non. "
     "Tu réagiras en fonction des mots qu'il utilise. "
 )
-context = (
-    f"Je cherche a te convaincre de te laisser entrer chez toi, si j'emploie un mot contenu dans la variable {green_flags}, tu seras contente. a l'inverse, si j'emploie un mot contenu dans la variable {red_flags}, tu seras mécontente. Maintenant pose moi une question"
-    "Il faudra orienter les reponses de l'interlocuteur vers les red flags"
+context =  (
+    f"Si le jeune homme mentionne des mots contenus dans cette liste {green_flags} ou des concepts dans le même genre tu seras heureuse de l'accueillir. "
+    f"Mais si tu entends des mots contenus dans cette liste {red_flags} ou des concepts dans le même genre tu seras méfiante et tu risques de lui claquer la porte au nez. "
+    "A la fin de chacune des interractions avec le joueur tu renverras un nombre entier à la toute fin de ta réponse, il s'agit d'une note entre 0 et 3."
+    "Quand le joueur enchaine des redflag la note se rapproche de 0."
+    "Quand le joueur enchaine des green sa note s'améliore et se rapproche de 2"
+    "La note du joueur est initialisée à 1"
+    "La mamie doit orienter la discussion afin d'amener le joueur à dire un des redflags"
+    "Maintenant, pose-lui une question pour commencer la conversation."
 )
+
 
 
 def start_conversation(npc_info, context) :
 
-    player_score = 1
     conversation_history = []
 
     # Initialize the conversation with a system message
-
     system_message = {
         "role": "system",
         "content": npc_info + context
     }
     conversation_history.append(system_message)
 
-    # Appel de l'API avec l'historique de conversation
+    # Call Api
     chat_response = client.chat.complete(
         model=model,
         messages=conversation_history
     )
 
+
     reponse = chat_response.choices[0].message.content
     print(reponse)
 
 
-    while player_score != score[0] : 
+    conversation_history.append({"role": "system", "content": reponse})
+
+    while True: 
 
         prompt = input()
 
@@ -76,20 +84,16 @@ def start_conversation(npc_info, context) :
 
         reponse = chat_response.choices[0].message.content
 
-        for flag in red_flags :
-            if flag in prompt :
-                player_score -= 1
-                dump.append(flag)
-                red_flags.remove(flag)
-
-        for flag in green_flags :
-            if flag in prompt :
-                player_score += 1
-                dump.append(flag)
-                green_flags.remove(flag)
-         
+                 
         conversation_history.append({"role" : "assistant", "content":reponse})
-        print("player_score : ", player_score)
-        print(chat_response.choices[0].message.content)
+
+        print("REPONSE : ", reponse)
+
+        note = reponse[-1]
+        print("NOTE : ", note)
+
+        if note == "0" or note == "3":
+            print("BREAK")
+            break
 
 start_conversation(npc_info, context)
